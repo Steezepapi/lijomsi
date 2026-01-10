@@ -1,19 +1,12 @@
-import { prisma } from '../../../lib/prisma'
+import { list } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const file = await prisma.file.findFirst({
-    where: { name: 'Docusign_eSignature.msi' }
-  })
-
-  if (!file) {
+  const { blobs } = await list({ prefix: 'Docusign_eSignature.msi' })
+  
+  if (!blobs.length) {
     return NextResponse.json({ error: 'File not found' }, { status: 404 })
   }
 
-  return new NextResponse(file.data, {
-    headers: {
-      'Content-Type': file.mimeType,
-      'Content-Disposition': `attachment; filename="${file.name}"`
-    }
-  })
+  return NextResponse.redirect(blobs[0].url)
 }
