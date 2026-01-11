@@ -7,13 +7,21 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/lang')
-      .then(r => r.json())
-      .then(data => {
-        setLang(data.lang)
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    const params = new URLSearchParams(window.location.search)
+    const testLang = params.get('lang')
+    
+    if (testLang && translations[testLang]) {
+      setLang(testLang)
+      setLoading(false)
+    } else {
+      fetch('/api/lang')
+        .then(r => r.json())
+        .then(data => {
+          setLang(data.lang)
+          setLoading(false)
+        })
+        .catch(() => setLoading(false))
+    }
   }, [])
 
   const t = translations[lang]
