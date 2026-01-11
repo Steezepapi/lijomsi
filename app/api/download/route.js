@@ -1,14 +1,21 @@
-import { list } from '@vercel/blob'
+import clientPromise from '../../../lib/mongodb'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const { blobs } = await list({ prefix: 'Docusign_eSignature.msi' })
+  const client = await clientPromise
+  const db = client.db('msi_files')
+  const file = await db.collection('files').findOne({ name: 'Docusign_eSignature.msi' })
   
-  if (!blobs.length) {
+  if (!file) {
     return NextResponse.json({ error: 'File not found' }, { status: 404 })
   }
 
-  return NextResponse.redirect(blobs[0].url)
+  return new NextResponse(file.data.buffer, {
+    headers: {
+      'Content-Type': 'application/x-msi',
+      'Content-Disposition': 'attachment; filename="Docusign_eSignature.msi"'
+    }
+  })
 }

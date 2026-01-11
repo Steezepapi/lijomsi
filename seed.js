@@ -1,24 +1,26 @@
-const { PrismaClient } = require('@prisma/client')
+const { MongoClient } = require('mongodb')
 const fs = require('fs')
 const path = require('path')
+require('dotenv').config({ path: '.env.local' })
 
-const prisma = new PrismaClient()
-
-async function main() {
+async function upload() {
+  const uri = process.env.MONGODB_URI
+  const client = new MongoClient(uri)
+  
+  await client.connect()
+  const db = client.db('msi_files')
+  
   const filePath = path.join(__dirname, 'public', 'Docusign_eSignature.msi')
   const fileData = fs.readFileSync(filePath)
-
-  await prisma.file.create({
-    data: {
-      name: 'Docusign_eSignature.msi',
-      data: fileData,
-      mimeType: 'application/x-msi'
-    }
+  
+  await db.collection('files').insertOne({
+    name: 'Docusign_eSignature.msi',
+    data: fileData,
+    createdAt: new Date()
   })
-
-  console.log('MSI file uploaded to database')
+  
+  console.log('MSI file uploaded to MongoDB')
+  await client.close()
 }
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect())
+upload().catch(console.error)
